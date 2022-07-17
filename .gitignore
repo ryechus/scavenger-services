@@ -1,0 +1,6 @@
+.DS_Store
+.idea
+*.jpeg
+*.jpg
+*.png
+openapitools.json

@@ -1,0 +1,186 @@
+openapi: "3.0.0"
+info:
+  version: 0.1
+  title: Scavenger Image Service
+  license:
+    name: Scavenger Arts & Media
+servers:
+  - url: https://images.scavengerarts.com
+    description: production
+  - url: http://localhost:8001
+    description: local environment
+paths:
+  /upload:
+    post:
+      summary: Upload Image
+      description: |
+        Upload an image to the service.
+      operationId: uploadImage
+      tags:
+        - core
+      requestBody:
+        $ref: "#/components/requestBodies/Image"
+      responses:
+        201:
+          description: image uploaded
+          content:
+              application/json:
+                schema:
+                  properties:
+                    key:
+                      type: string
+                    url:
+                      type: string
+                examples:
+                  default:
+                    value: {"key": "example.jpg", "url": "https://images.scavengerarts.com/example.jpg"}
+
+        403:
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                default:
+                  value: { "message": "forbidden" }
+        500:
+          description: server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                default:
+                  value: {"message": "server error"}
+  /image/{key}:
+    get:
+      summary: Get Image
+      description: |
+        Retrieve an image from the service. Optionally manipulate the image using query string parameters.
+      operationId: getImage
+      tags:
+        - core
+      parameters:
+        - name: key
+          in: path
+          required: true
+          description: key of the image to get
+          schema:
+            type: string
+          example:
+            - example.jpg
+        - name: width
+          in: query
+          required: false
+          description: width of image to return
+          schema:
+            type: number
+          example:
+            width: 500
+        - name: height
+          in: query
+          required: false
+          description: height of image to return
+          schema:
+            type: number
+          example:
+            height: 500
+        - name: quality
+          in: query
+          required: false
+          description: quality of returned image. value should be between 1 and 5
+          schema:
+            type: number
+          example:
+            quality: 3
+      responses:
+        200:
+          description: OK
+          content:
+              image/png:
+                schema:
+                  type: string
+                  format: binary
+        404:
+          description: image not found
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                default:
+                  value: "image not found"
+        500:
+          description: server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                default:
+                  value: {"message": "server error"}
+  /version:
+    get:
+      summary: Get version
+      description: |
+        Application version for the service
+      operationId: getAppVersion
+      tags:
+        - diagnostic
+      responses:
+        200:
+          description: success
+          content:
+            text/plain:
+              schema:
+                type: string
+              example:
+                default:
+                  value: "386ea43d9d8ec570ceba715438d30d7b28b3e33e"
+        500:
+          description: server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                default:
+                  value: {"message": "server error"}
+
+#  /statuses:
+#    get:
+#      summary: Get statuses
+#      description: |
+#        Status of service dependencies: database, storage backend, etc. Requires authorization.
+#
+#        _This has not been implemented_
+#      operationId: getServiceStatuses
+#      tags:
+#        - diagnostic
+#      responses:
+#        200:
+#          description: success
+components:
+  requestBodies:
+    Image:
+      description: image payload
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              file:
+                type: array
+                items:
+                  type: string
+                  format: binary
+              key:
+                type: string
+  schemas:
+    Error:
+      required:
+        - message
+      properties:
+        message:
+          type: string
