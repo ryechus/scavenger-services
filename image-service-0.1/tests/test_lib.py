@@ -7,6 +7,18 @@ from image_service.lib.transform import resize_image
 
 
 @pytest.fixture
+def boto3_session():
+    with mock_s3():
+        session = boto3.Session()
+        yield session
+
+
+@pytest.fixture
+def s3_client(boto3_session):
+    yield boto3_session.client("s3")
+
+
+@pytest.fixture
 def s3_bucket(s3_client):
     s3_client.create_bucket(Bucket=settings.s3_bucket_name)
 
