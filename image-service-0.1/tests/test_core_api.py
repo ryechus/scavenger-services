@@ -1,5 +1,6 @@
 # coding: utf-8
 import os
+from urllib.parse import urlparse
 
 import boto3
 import pytest
@@ -16,7 +17,7 @@ from image_service.models.upload_image201_response import (  # noqa: F401
 pytestmark = pytest.mark.aws
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="session", autouse=True)
 def s3_bucket():
     s3_resource = boto3.resource("s3")
 
@@ -37,8 +38,8 @@ def s3_bucket():
 
 
 @pytest_asyncio.fixture
-async def s3_object():
-    file = open("assets/wrdsmth.JPG", "rb")
+async def s3_object(local_image):
+    file = local_image
     filename = os.path.split(file.name)[-1]
     image = await put_image(file, filename)
 
@@ -52,26 +53,30 @@ async def s3_object():
 
 
 @pytest.mark.asyncio
-async def test_get_image(client, s3_bucket, s3_object):
+async def test_get_image(client, s3_object):
     """Test case for getting an image from the storage backend"""
+    width, height, quality = [10, 10, 10]
     headers = {}
     response = client.request(
         "GET",
-        f"/image/wrdsmth.JPG",
+        "/image/wrdsmth.JPG",
         headers=headers,
-        params={"width": "10", "height": "10", "quality": "3"},
+        params={"width": width, "height": height, "quality": quality},
     )
 
     assert response.status_code == 200
+    assert (
+        os.path.split(urlparse(response.json()).path)[-1]
+        == f"wrdsmth-{width}x{height}q{quality}.JPG"
+    )
 
 
-@pytest.mark.asyncio
 def test_get_image_not_found(client):
     """Test case for getting an image from the storage backend"""
     headers = {}
     response = client.request(
         "GET",
-        f"/image/test",
+        "/image/test",
         headers=headers,
         params={"width": "10", "height": "10", "quality": "3"},
     )
@@ -79,20 +84,15 @@ def test_get_image_not_found(client):
     assert response.status_code == 404
 
 
-# def test_upload_image(client: TestClient):
-#     """Test case for upload_image
-#
-#     Upload Image
-#     """
-#     upload_image_request = image_service.UploadImageRequest()
-#
-#     headers = {}
-#     response = client.request(
-#         "POST",
-#         "/upload",
-#         headers=headers,
-#         json=upload_image_request,
-#     )
+def test_upload_image(client, local_image):
+    """Test case for upload_image
 
-# uncomment below to assert the status code of the HTTP response
-# assert response.status_code == 200
+    Upload Image
+    """
+    file = local_image
+    headers = {}
+    response = client.request("POST", "/upload/", headers=headers, files={"file": file})
+
+    # uncomment below to assert the status code of the HTTP response
+    assert response.status_code == 200
+    assert response.json()["filename"] == "wrdsmth.JPG"

@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -15,3 +17,12 @@ def app() -> FastAPI:
 @pytest.fixture
 def client(app) -> TestClient:
     return TestClient(app)
+
+
+@pytest.fixture
+def local_image():
+    file = open(os.path.join(os.path.dirname(__file__), "assets/wrdsmth.JPG"), "rb")
+
+    yield file
+
+    file.close()

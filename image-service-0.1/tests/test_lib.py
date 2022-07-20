@@ -28,7 +28,9 @@ def s3_bucket(s3_client):
 
 @pytest.fixture
 def s3_object(s3_client, s3_bucket):
-    s3_client.put_object(Body=b"this is a test string", Bucket=settings.s3_bucket_name, Key="test")
+    s3_client.put_object(
+        Body=b"this is a test string", Bucket=settings.s3_bucket_name, Key="test"
+    )
 
     yield
 
@@ -49,14 +51,15 @@ def test_get_image_not_found(s3_bucket):
 
 @pytest.mark.parametrize("width,height", [("100", "100"), (100, 100)])
 @pytest.mark.asyncio
-async def test_resize_image(s3_client, s3_bucket, width, height):
-    with open("assets/wrdsmth.JPG", "rb") as file:
-        r_im = await resize_image(file, width, height)
+async def test_resize_image(s3_client, s3_bucket, width, height, local_image):
+    file = local_image
 
-        await put_image(r_im, "test_thumbnail", extra_args={"ContentType": "image/jpeg"})
+    r_im = await resize_image(file, width, height)
 
-        new_image = get_image("test_thumbnail")
+    await put_image(r_im, "test_thumbnail", extra_args={"ContentType": "image/jpeg"})
 
-        assert hasattr(new_image, "read")
-        assert hasattr(new_image, "seek")
-        assert hasattr(new_image, "tell")
+    new_image = get_image("test_thumbnail")
+
+    assert hasattr(new_image, "read")
+    assert hasattr(new_image, "seek")
+    assert hasattr(new_image, "tell")

@@ -20,6 +20,7 @@ from fastapi import (  # noqa: F401
 )
 from fastapi.responses import JSONResponse
 
+from image_service.core.settings import settings
 from image_service.lib.storage import get_image as get_image_from_storage
 from image_service.lib.storage import get_image_url, put_image
 from image_service.lib.transform import resize_image
@@ -32,7 +33,9 @@ async def get_image(
     key: str = Path(None, description="key of the image to get"),
     width: int = Query(None, description="width of image to return"),
     height: int = Query(None, description="height of image to return"),
-    quality: int = Query(100, description="quality of returned image. value should be between 1 and 5"),
+    quality: int = Query(
+        100, description="quality of returned image. value should be between 1 and 5"
+    ),
 ):
     file = get_image_from_storage(key)
     if file is None:
@@ -57,6 +60,9 @@ async def upload_image(file: UploadFile = File(...)):
     s3 = session.client("s3")
 
     s3.upload_fileobj(
-        file.file, "scavenger-image-service", file.filename, ExtraArgs={"ContentType": file.content_type}
+        file.file,
+        settings.s3_bucket_name,
+        file.filename,
+        ExtraArgs={"ContentType": file.content_type},
     )
     return {"filename": file.filename}

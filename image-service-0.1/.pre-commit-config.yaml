@@ -1,0 +1,17 @@
+repos:
+  - repo: https://github.com/pycqa/isort
+    rev: 5.10.1
+    hooks:
+      - id: isort
+        name: isort
+        args: [--settings-path, image-service-0.1/pyproject.toml]
+  - repo: https://github.com/psf/black
+    rev: 21.11b1
+    hooks:
+      - id: black
+        args: [--config, image-service-0.1/pyproject.toml]
+  - repo: https://github.com/pycqa/flake8
+    rev: 4.0.1
+    hooks:
+      - id: flake8
+        args: [--config, image-service-0.1/.flake8]
