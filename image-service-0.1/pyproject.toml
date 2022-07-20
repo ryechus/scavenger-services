@@ -42,7 +42,6 @@ python-multipart = "^0.0.5"
 boto3 = "^1.24.26"
 Pillow = "^9.2.0"
 uvicorn = "^0.18.2"
-python-dotenv = "^0.20.0"
 
 [tool.poetry.dev-dependencies]
 ipython = "^8.4.0"
@@ -50,12 +49,12 @@ ipdb = "^0.13.9"
 pytest = "^7.1.2"
 moto = "^3.1.16"
 poetry-dotenv-plugin = "^0.1.0-alpha.2"
+pytest-asyncio = "^0.19.0"
+python-dotenv = "^0.20.0"
+pytest-dotenv = "^0.5.2"
 
 [tool.poetry.scripts]
 server = "image_service.main:run_server"
-
-[tool.poetry.group.dev.dependencies]
-pytest-asyncio = "^0.19.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
