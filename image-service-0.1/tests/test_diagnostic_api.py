@@ -2,8 +2,7 @@
 
 from fastapi.testclient import TestClient
 
-
-from image_service.models.error import Error  # noqa: F401
+import image_service
 
 
 def test_get_app_version(client: TestClient):
@@ -12,8 +11,7 @@ def test_get_app_version(client: TestClient):
     Get version
     """
 
-    headers = {
-    }
+    headers = {}
     response = client.request(
         "GET",
         "/version",
@@ -21,5 +19,5 @@ def test_get_app_version(client: TestClient):
     )
 
     # uncomment below to assert the status code of the HTTP response
-    #assert response.status_code == 200
-
+    assert response.status_code == 200
+    assert response.json() == image_service.__version__

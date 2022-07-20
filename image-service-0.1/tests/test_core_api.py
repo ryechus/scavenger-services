@@ -1,48 +1,98 @@
 # coding: utf-8
+import os
 
-from fastapi.testclient import TestClient
+import boto3
+import pytest
+import pytest_asyncio
+from botocore.exceptions import ClientError
 
-
+from image_service.core.settings import settings
+from image_service.lib.storage import put_image
 from image_service.models.error import Error  # noqa: F401
-from image_service.models.upload_image201_response import UploadImage201Response  # noqa: F401
-from image_service.models.upload_image_request import UploadImageRequest  # noqa: F401
+from image_service.models.upload_image201_response import (  # noqa: F401
+    UploadImage201Response,
+)
+
+pytestmark = pytest.mark.aws
 
 
-def test_get_image(client: TestClient):
-    """Test case for get_image
+@pytest.fixture(scope="session")
+def s3_bucket():
+    s3_resource = boto3.resource("s3")
 
-    Get Image
-    """
-    params = [("width", {"width":500}),     ("height", {"height":500}),     ("quality", {"quality":3})]
-    headers = {
-    }
+    if not settings.s3_bucket_name.endswith(".test"):
+        raise pytest.fail("Must use an S3 bucket name that ends in .test")
+
+    try:
+        bucket = s3_resource.create_bucket(Bucket=settings.s3_bucket_name)
+    except ClientError as exc:
+        if exc.response["Error"]["Code"] == "BucketAlreadyOwnedByYou":
+            bucket = s3_resource.Bucket(settings.s3_bucket_name)
+        else:
+            raise exc
+
+    yield bucket
+
+    bucket.objects.all().delete()
+
+
+@pytest_asyncio.fixture
+async def s3_object():
+    file = open("assets/wrdsmth.JPG", "rb")
+    filename = os.path.split(file.name)[-1]
+    image = await put_image(file, filename)
+
+    yield image
+
+    s3_client = boto3.client("s3")
+
+    s3_client.delete_object(Bucket=settings.s3_bucket_name, Key=filename)
+
+    file.close()
+
+
+@pytest.mark.asyncio
+async def test_get_image(client, s3_bucket, s3_object):
+    """Test case for getting an image from the storage backend"""
+    headers = {}
     response = client.request(
         "GET",
-        "/image/{key}".format(key='[\"example.jpg\"]'),
+        f"/image/wrdsmth.JPG",
         headers=headers,
-        params=params,
+        params={"width": "10", "height": "10", "quality": "3"},
     )
 
-    # uncomment below to assert the status code of the HTTP response
-    #assert response.status_code == 200
+    assert response.status_code == 200
 
 
-def test_upload_image(client: TestClient):
-    """Test case for upload_image
-
-    Upload Image
-    """
-    upload_image_request = image_service.UploadImageRequest()
-
-    headers = {
-    }
+@pytest.mark.asyncio
+def test_get_image_not_found(client):
+    """Test case for getting an image from the storage backend"""
+    headers = {}
     response = client.request(
-        "POST",
-        "/upload",
+        "GET",
+        f"/image/test",
         headers=headers,
-        json=upload_image_request,
+        params={"width": "10", "height": "10", "quality": "3"},
     )
 
-    # uncomment below to assert the status code of the HTTP response
-    #assert response.status_code == 200
+    assert response.status_code == 404
 
+
+# def test_upload_image(client: TestClient):
+#     """Test case for upload_image
+#
+#     Upload Image
+#     """
+#     upload_image_request = image_service.UploadImageRequest()
+#
+#     headers = {}
+#     response = client.request(
+#         "POST",
+#         "/upload",
+#         headers=headers,
+#         json=upload_image_request,
+#     )
+
+# uncomment below to assert the status code of the HTTP response
+# assert response.status_code == 200

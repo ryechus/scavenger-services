@@ -18,6 +18,7 @@ from fastapi import (  # noqa: F401
     UploadFile,
     status,
 )
+from fastapi.responses import JSONResponse
 
 from image_service.lib.storage import get_image as get_image_from_storage
 from image_service.lib.storage import get_image_url, put_image
@@ -34,6 +35,8 @@ async def get_image(
     quality: int = Query(100, description="quality of returned image. value should be between 1 and 5"),
 ):
     file = get_image_from_storage(key)
+    if file is None:
+        return JSONResponse(status_code=404, content="image not found")
 
     r_im = await resize_image(file, width, height, quality)
 

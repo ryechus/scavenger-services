@@ -1,3 +1,4 @@
+import boto3
 import pytest
 from moto import mock_s3
 
@@ -49,7 +50,7 @@ def test_get_image_not_found(s3_bucket):
 @pytest.mark.parametrize("width,height", [("100", "100"), (100, 100)])
 @pytest.mark.asyncio
 async def test_resize_image(s3_client, s3_bucket, width, height):
-    with open("test.jpeg", "rb") as file:
+    with open("assets/wrdsmth.JPG", "rb") as file:
         r_im = await resize_image(file, width, height)
 
         await put_image(r_im, "test_thumbnail", extra_args={"ContentType": "image/jpeg"})
