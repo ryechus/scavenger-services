@@ -2,7 +2,7 @@ from pydantic import BaseSettings
 
 
 class APISettings(BaseSettings):
-    log_level: str = "DEBUG"
+    log_level: str = "INFO"
     s3_bucket_name: str = "scavenger-image-service"
 
 
@@ -16,7 +16,7 @@ class AWSSettings(BaseSettings):
 
 
 class ProjectSettings(APISettings, AWSSettings):
-    ...
+    image_key_name: str = "images"
 
 
 settings = ProjectSettings()

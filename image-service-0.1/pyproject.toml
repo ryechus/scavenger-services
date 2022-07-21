@@ -42,6 +42,7 @@ python-multipart = "^0.0.5"
 boto3 = "^1.24.26"
 Pillow = "^9.2.0"
 uvicorn = "^0.18.2"
+redis = "^4.3.4"
 
 [tool.poetry.dev-dependencies]
 ipython = "^8.4.0"

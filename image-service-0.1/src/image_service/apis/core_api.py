@@ -2,7 +2,6 @@
 import os.path
 from typing import Dict, List  # noqa: F401
 
-import boto3
 from fastapi import (  # noqa: F401
     APIRouter,
     Body,
@@ -20,10 +19,12 @@ from fastapi import (  # noqa: F401
 )
 from fastapi.responses import JSONResponse
 
+from image_service.core.connections import redis_con
 from image_service.core.settings import settings
 from image_service.lib.storage import get_image as get_image_from_storage
 from image_service.lib.storage import get_image_url, put_image
 from image_service.lib.transform import resize_image
+from image_service.models.upload_image201_response import UploadImage201Response
 
 router = APIRouter()
 
@@ -37,32 +38,48 @@ async def get_image(
         100, description="quality of returned image. value should be between 1 and 5"
     ),
 ):
-    file = get_image_from_storage(key)
-    if file is None:
-        return JSONResponse(status_code=404, content="image not found")
+    # if not redis_con.sismember(settings.image_key_name, key):
+    #     return JSONResponse(status_code=404, content="image not found")
 
-    r_im = await resize_image(file, width, height, quality)
-
+    if not all([width, height, quality]):
+        return get_image_url(key)
+    # image = await does_image_exist(key)
+    #
+    # if image is None:
     filename, ext = os.path.splitext(key)
     thumbnail_key = f"{filename}-{width}x{height}q{quality}{ext}"
 
-    response = get_image_url(thumbnail_key)
+    in_s3 = redis_con.sismember(settings.image_key_name, thumbnail_key)
+    # existing_resized_image = await does_image_exist(thumbnail_key)
 
-    await put_image(r_im, thumbnail_key, extra_args={"ContentType": "image/jpeg"})
+    if not in_s3:
+        image = await get_image_from_storage(key)
+        if not image:
+            return JSONResponse(status_code=404, content="image not found")
 
-    return response
+        r_im = await resize_image(image, width, height, quality)
+        await put_image(r_im, thumbnail_key, extra_args={"ContentType": "image/jpeg"})
+
+    # image_url = get_image_url(thumbnail_key)
+
+    # response = get_image_url(key)
+
+    return get_image_url(thumbnail_key)
 
 
 @router.post("/upload/")
-async def upload_image(file: UploadFile = File(...)):
+async def upload_image(file: UploadFile = File(...), key: str = Form(default="")):
     """Upload an image to the service."""
-    session = boto3.Session(profile_name="hohomike", region_name="us-west-1")
-    s3 = session.client("s3")
+    key = key.strip() if key.strip() else file.filename
 
-    s3.upload_fileobj(
-        file.file,
-        settings.s3_bucket_name,
-        file.filename,
-        ExtraArgs={"ContentType": file.content_type},
+    await put_image(file.file, key, extra_args={"ContentType": file.content_type})
+
+    # s3.upload_fileobj(
+    #     file.file,
+    #     settings.s3_bucket_name,
+    #     key,
+    #     ExtraArgs={"ContentType": file.content_type},
+    # )
+    return UploadImage201Response(
+        key=key, url=f"http://images.scavengerarts.com/images/{key}"
     )
-    return {"filename": file.filename}

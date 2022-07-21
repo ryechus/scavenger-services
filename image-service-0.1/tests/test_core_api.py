@@ -10,9 +10,6 @@ from botocore.exceptions import ClientError
 from image_service.core.settings import settings
 from image_service.lib.storage import put_image
 from image_service.models.error import Error  # noqa: F401
-from image_service.models.upload_image201_response import (  # noqa: F401
-    UploadImage201Response,
-)
 
 pytestmark = pytest.mark.aws
 
