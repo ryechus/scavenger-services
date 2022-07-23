@@ -30,3 +30,7 @@ print(f'USING AWS PROFILE: {os.environ.get("AWS_PROFILE")}')
 def run_server():
     """Launched with `poetry run start` at root level"""
     uvicorn.run("image_service.main:app", host="0.0.0.0", port=8000, reload=True)
+
+
+if __name__ == "__main__":
+    run_server()

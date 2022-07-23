@@ -17,6 +17,8 @@ class AWSSettings(BaseSettings):
 
 class ProjectSettings(APISettings, AWSSettings):
     image_key_name: str = "images"
+    redis_host_name: str = "localhost"
+    redis_host_port: int = 6379
 
 
 settings = ProjectSettings()

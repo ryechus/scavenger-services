@@ -1,9 +1,9 @@
 import boto3
 from botocore.exceptions import ClientError
 
-from image_service.core.connections import redis_con
 from image_service.core.logging import logger
 from image_service.core.settings import settings
+from image_service.models.cache.image import ImageCache
 
 s3 = boto3.client("s3")
 
@@ -44,7 +44,8 @@ async def put_image(file, key, extra_args=None):
 
     s3_file = s3.get_object(Bucket=settings.s3_bucket_name, Key=key)
 
-    _ = redis_con.sadd(settings.image_key_name, key)
+    image_cache = ImageCache()
+    image_cache.add(key)
 
     return s3_file["Body"]
 
@@ -54,10 +55,17 @@ def get_image_url(key, expires_in=30):
 
     This is a pre-signed URL that expires after 30 seconds -- this amount of time will probably
     """
-    response = s3.generate_presigned_url(
-        "get_object",
-        Params={"Bucket": settings.s3_bucket_name, "Key": key},
-        ExpiresIn=expires_in,
-    )
+    image_cache = ImageCache(expires_in=expires_in)
+    presigned_url = image_cache.get(key)
 
-    return response
+    if not presigned_url:
+        response = s3.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": settings.s3_bucket_name, "Key": key},
+            ExpiresIn=expires_in,
+        )
+        # redis_con.set(key, response, expires_in)
+        image_cache.set(key, response)
+        presigned_url = response
+
+    return presigned_url

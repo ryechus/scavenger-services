@@ -1,3 +1,7 @@
 import redis
 
-redis_con = redis.Redis(host="localhost", port=6379, db=0)
+from image_service.core.settings import settings
+
+redis_con = redis.Redis(
+    host=settings.redis_host_name, port=settings.redis_host_port, db=0
+)
