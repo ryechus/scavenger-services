@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "instagram-sync"
+version = "0.1.0"
+description = ""
+authors = ["MJ Hardin <mhardinla@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+Django = {version = ">=3.0", optional = true}
+django-encrypted-model-fields = {version = "^0.6.5", optional = true}
+requests = "^2.28.1"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.extras]
+django = ["django", "django-encrypted-model-fields"]
