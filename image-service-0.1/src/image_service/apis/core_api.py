@@ -64,5 +64,5 @@ async def upload_image(file: UploadFile = File(...), key: str = Form(default="")
     await put_image(file.file, key, extra_args={"ContentType": file.content_type})
 
     return UploadImage201Response(
-        key=key, url=f"http://images.scavengerarts.com/images/{key}"
+        key=key, url=f"https://images.scavenger.news/image/{key}"
     )

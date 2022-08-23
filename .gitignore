@@ -4,3 +4,4 @@
 *.jpg
 *.png
 openapitools.json
+**/__pycache__

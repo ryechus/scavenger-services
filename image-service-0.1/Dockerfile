@@ -1,30 +1,18 @@
-FROM python:3.7 AS builder
+FROM python:3.9 AS builder
 
-WORKDIR /usr/src/app
+WORKDIR /usr/
 
-RUN python3 -m venv /venv
-ENV PATH="/venv/bin:$PATH"
+RUN python3 -m venv ./venv
+ENV PATH="/usr/venv/bin:$PATH"
 
-RUN pip install --upgrade pip
+WORKDIR /usr/src/dist
 
-COPY . .
-RUN pip install --no-cache-dir .
+COPY ./dist/image_service-0.1-py3-none-any.whl ./image_service-0.1-py3-none-any.whl
+
+RUN pip install image_service-0.1-py3-none-any.whl
 
 
-FROM python:3.7 AS test_runner
+FROM builder
 WORKDIR /tmp
-COPY --from=builder /venv /venv
-COPY --from=builder /usr/src/app/tests tests
-ENV PATH=/venv/bin:$PATH
-
-# install test dependencies
-RUN pip install pytest
-
-# run tests
-RUN pytest tests
-
-
-FROM python:3.7 AS service
-WORKDIR /root/app/site-packages
-COPY --from=test_runner /venv /venv
+COPY --from=builder /usr/venv /venv
 ENV PATH=/venv/bin:$PATH
