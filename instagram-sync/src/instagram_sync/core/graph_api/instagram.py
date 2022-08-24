@@ -21,7 +21,7 @@ def get_media(account_id, access_token, since=FIRST_POST_TIMESTAMP):
     response = requests.get(
         f"{ig_sync_settings.GRAPH_API_URL}/{account_id}/media"
         f"?access_token={access_token}"
-        "&fields=media_url,children{media_url},caption,timestamp"
+        "&fields=media_url,children{media_url},caption,timestamp,permalink"
         f"&limit={media_limit}"
         f"&since={since}"
     )
