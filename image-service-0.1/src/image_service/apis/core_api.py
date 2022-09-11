@@ -38,7 +38,7 @@ async def get_image(
     ),
 ):
     if not all([width, height, quality]):
-        return get_image_url(key)
+        return f"https://{os.environ['S3_BUCKET_NAME']}/{key}"
 
     filename, ext = os.path.splitext(key)
     thumbnail_key = f"{filename}-{width}x{height}q{quality}{ext}"
@@ -53,7 +53,7 @@ async def get_image(
         r_im = await resize_image(image, width, height, quality)
         await put_image(r_im, thumbnail_key, extra_args={"ContentType": "image/jpeg"})
 
-    return get_image_url(thumbnail_key)
+    return f"https://{os.environ['S3_BUCKET_NAME']}/{thumbnail_key}"
 
 
 @router.post("/upload/")
@@ -64,5 +64,5 @@ async def upload_image(file: UploadFile = File(...), key: str = Form(default="")
     await put_image(file.file, key, extra_args={"ContentType": file.content_type})
 
     return UploadImage201Response(
-        key=key, url=f"https://{os.environ['S3_BUCKET_NAME']}/image/{key}"
+        key=key, url=f"https://{os.environ['S3_BUCKET_NAME']}/{key}"
     )
