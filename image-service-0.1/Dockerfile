@@ -7,9 +7,11 @@ ENV PATH="/usr/venv/bin:$PATH"
 
 WORKDIR /usr/src/dist
 
-COPY ./dist/image_service-0.1-py3-none-any.whl ./image_service-0.1-py3-none-any.whl
+ARG lib_version=0.2
 
-RUN pip install image_service-0.1-py3-none-any.whl
+COPY ./dist/image_service-${lib_version}-py3-none-any.whl ./image_service-${lib_version}-py3-none-any.whl
+
+RUN pip install image_service-${lib_version}-py3-none-any.whl
 
 
 FROM builder
