@@ -50,6 +50,15 @@ async def put_image(file, key, extra_args=None):
     return s3_file["Body"]
 
 
+async def delete_image(key):
+    response = s3.delete_object(Bucket=settings.s3_bucket_name, Key=key)
+
+    image_cache = ImageCache()
+    image_cache.remove(key)
+
+    return True
+
+
 def get_image_url(key, expires_in=30):
     """Get URL for image in storage in backend
 

@@ -11,3 +11,7 @@ class ImageCache(Cache):
     @silent_connection
     def add(self, value):
         _ = self.conn.sadd(settings.image_key_name, value)
+
+    @silent_connection
+    def remove(self, value):
+        return self.conn.srem(settings.image_key_name, value)

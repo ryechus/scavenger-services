@@ -19,6 +19,8 @@ from fastapi import (  # noqa: F401
 )
 from fastapi.responses import JSONResponse
 
+from image_service.core.settings import settings
+from image_service.lib.storage import delete_image as delete_image_from_storage
 from image_service.lib.storage import get_image as get_image_from_storage
 from image_service.lib.storage import get_image_url, put_image
 from image_service.lib.transform import resize_image
@@ -28,17 +30,15 @@ from image_service.models.upload_image201_response import UploadImage201Response
 router = APIRouter()
 
 
-@router.get("/image/{key}")
+@router.get("/image/{key:path}")
 async def get_image(
     key: str = Path(None, description="key of the image to get"),
     width: int = Query(None, description="width of image to return"),
     height: int = Query(None, description="height of image to return"),
-    quality: int = Query(
-        100, description="quality of returned image. value should be between 1 and 5"
-    ),
+    quality: int = Query(100, description="quality of returned image. value should be between 1 and 5"),
 ):
     if not all([width, height, quality]):
-        return f"https://{os.environ['S3_BUCKET_NAME']}/{key}"
+        return f"https://{settings.s3_bucket_name}/{key}"
 
     filename, ext = os.path.splitext(key)
     thumbnail_key = f"{filename}-{width}x{height}q{quality}{ext}"
@@ -53,7 +53,14 @@ async def get_image(
         r_im = await resize_image(image, width, height, quality)
         await put_image(r_im, thumbnail_key, extra_args={"ContentType": "image/jpeg"})
 
-    return f"https://{os.environ['S3_BUCKET_NAME']}/{thumbnail_key}"
+    return f"https://{settings.s3_bucket_name}/{thumbnail_key}"
+
+
+@router.delete("/image/{key:path}")
+async def delete_image(key: str = Path(...)):
+    deleted_image = await delete_image_from_storage(key)
+
+    return deleted_image
 
 
 @router.post("/upload/")
@@ -63,6 +70,4 @@ async def upload_image(file: UploadFile = File(...), key: str = Form(default="")
 
     await put_image(file.file, key, extra_args={"ContentType": file.content_type})
 
-    return UploadImage201Response(
-        key=key, url=f"https://{os.environ['S3_BUCKET_NAME']}/{key}"
-    )
+    return UploadImage201Response(key=key, url=f"https://{settings.s3_bucket_name}/{key}")

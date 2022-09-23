@@ -3,7 +3,7 @@ from pydantic import BaseSettings
 
 class APISettings(BaseSettings):
     log_level: str = "INFO"
-    s3_bucket_name: str = "scavenger-image-service"
+    s3_bucket_name: str = "images.cdn.scavenger.news"
 
 
 class AWSSettings(BaseSettings):
